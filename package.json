@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix UI/my-react-app run dev",
+    "backend": "python -m uvicorn api:app --host 127.0.0.1 --port 8000",
+    "frontend": "npm --prefix UI/my-react-app run dev:ui"
+  },
+  "dependencies": {
+    "axios": "^1.13.6"
+  }
+}
