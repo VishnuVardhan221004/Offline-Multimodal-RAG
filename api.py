@@ -17,7 +17,6 @@ from app import (process_document, retrieve_context, load_cached_document,
                  is_overview_request, overview_context, MIN_RELEVANCE,
                  refers_to_document, document_question_context)
 
-NOT_FOUND = "I couldn't find this in the uploaded document."
 
 app = FastAPI()
 
@@ -104,6 +103,9 @@ async def chat(query: dict):
         history = query.get("history", "")
         doc_id = query.get("doc_id")
         doc_name = query.get("doc_name") or "document"
+        # Say "image" for PNG/JPG uploads and "document" for PDF/Word
+        kind = "image" if doc_name.lower().endswith((".png", ".jpg", ".jpeg")) else "document"
+        not_found = f"I couldn't find this in the uploaded {kind}."
 
         def reply(message):
             """Send a fixed message without asking the model."""
@@ -120,7 +122,7 @@ async def chat(query: dict):
         document = get_document(doc_id)
         if document is None:
             # The session refers to a document whose saved index was deleted
-            return reply(f"The document '{doc_name}' is no longer available on the server. "
+            return reply(f"The {kind} '{doc_name}' is no longer available on the server. "
                          "Please upload it again in this chat.")
 
         chunks, index = document
@@ -149,8 +151,8 @@ async def chat(query: dict):
             context, retrieved, best_score = retrieve_context(user_query, index, chunks)
             if best_score < MIN_RELEVANCE:
                 # Nothing in the document is related to the question
-                return reply(f"{NOT_FOUND} **{doc_name}** doesn't seem to cover this topic. "
-                             "Try asking about something the document talks about.")
+                return reply(f"{not_found} **{doc_name}** doesn't seem to cover this topic. "
+                             f"Try asking about something the {kind} talks about.")
 
         # Show the original file name in the sources, not the internal id
         retrieved = [{"page": c["page"], "source": doc_name} for c in retrieved]
@@ -160,7 +162,7 @@ You are an assistant that answers questions ONLY from the document provided belo
 
 Strict rules:
 - Use ONLY the information in "Context from document". Do NOT use any outside or general knowledge.
-- If the context does not contain the answer, reply exactly: "{NOT_FOUND}"
+- If the context does not contain the answer, reply exactly: "{not_found}"
 - Do not guess, and do not add facts that are not in the context.
 - No greetings or conversational text. Do not ask follow-up questions.
 - Do not start with "Here is the answer" or repeat the question; begin directly with the content.

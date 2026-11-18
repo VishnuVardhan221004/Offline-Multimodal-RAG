@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { IconSpark, IconClip, IconArrowUp, IconFile, IconLoader } from "./icons";
+import { isImageFile, fileKind } from "./fileKind";
 
 const API = "http://localhost:8000";
 
@@ -25,9 +26,9 @@ function uniqueSources(sources) {
   });
 }
 
-// The backend starts "not found" answers with this sentence; such answers get no source chips
-const NOT_FOUND = "I couldn't find this in the uploaded document";
-
+// The backend starts "not found" answers with this sentence ("...uploaded document/image");
+// such answers get no source chips
+const NOT_FOUND = "I couldn't find this in the uploaded";
 // Shows one chat session: its document, its messages and the message box.
 // Everything is stored in the session object (see App.jsx / sessions.js).
 export default function Chat({ session, updateSession }) {
@@ -240,7 +241,11 @@ export default function Chat({ session, updateSession }) {
             {doc ? (
               <>
                 <h1>Ask about {doc.name}</h1>
-                <p>Answers come only from this document, with the pages they are based on.</p>
+                <p>
+                  {isImageFile(doc.name)
+                    ? "Answers come only from the text in this image."
+                    : "Answers come only from this document, with the pages they are based on."}
+                </p>
               </>
             ) : (
               <>
@@ -285,7 +290,7 @@ export default function Chat({ session, updateSession }) {
                     ) : writing ? (
                       <div>
                         <span className="typing"><i /><i /><i /></span>
-                        <span className="typing-label">{doc ? "Searching the document and thinking…" : "Thinking…"}</span>
+                        <span className="typing-label">{doc ? `Searching the ${fileKind(doc.name)} and thinking…` : "Thinking…"}</span>
                       </div>
                     ) : null}
 
@@ -293,7 +298,7 @@ export default function Chat({ session, updateSession }) {
                       <div className="sources">
                         {uniqueSources(msg.sources).map((s, i) => (
                           <span key={i} className="source-chip" title={s.source}>
-                            <IconFile size={12} /> Page {s.page} · {s.source}
+                            <IconFile size={12} /> {isImageFile(s.source) ? s.source : `Page ${s.page} · ${s.source}`}
                           </span>
                         ))}
                       </div>
@@ -357,7 +362,7 @@ export default function Chat({ session, updateSession }) {
           </div>
 
           <div className="hint">
-            Answers come only from the uploaded document · Runs offline · Enter to send, Shift+Enter for a new line
+            Answers come only from the uploaded {doc ? fileKind(doc.name) : "document or image"} · Runs offline · Enter to send, Shift+Enter for a new line
           </div>
         </div>
       </div>

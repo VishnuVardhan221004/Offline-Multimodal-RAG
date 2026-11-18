@@ -1,4 +1,5 @@
 import { IconSpark, IconPlus, IconTrash } from "./icons";
+import { isImageFile } from "./fileKind";
 
 function formatTime(ts) {
   const d = new Date(ts);
@@ -43,7 +44,9 @@ export default function ChatSidebar({ sessions, currentId, onSelect, onNewChat, 
             <div className="history-meta">
               {s.streaming
                 ? <span className="live">Answering…</span>
-                : <>{s.doc ? (s.doc.name === s.title ? "Document" : s.doc.name) : "No document"} · {formatTime(s.updatedAt)}</>}
+                : <>{s.doc
+                    ? (s.doc.name === s.title ? (isImageFile(s.doc.name) ? "Image" : "Document") : s.doc.name)
+                    : "No document"} · {formatTime(s.updatedAt)}</>}
             </div>
             <button
               className="history-delete"
